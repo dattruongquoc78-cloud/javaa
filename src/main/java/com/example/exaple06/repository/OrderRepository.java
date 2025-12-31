@@ -20,8 +20,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByTableId(Long tableId);
 
     List<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
-// OrderRepository.java
-List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    // OrderRepository.java
+    List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
+
     // ✅ Đếm đơn theo trạng thái
     long countByStatus(OrderStatus status);
 
@@ -30,8 +32,8 @@ List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
             "WHERE o.status = :status AND o.updatedAt >= :startDate")
     Double sumByStatusAndDate(
             @Param("status") OrderStatus status,
-            @Param("startDate") LocalDateTime startDate
-    );
+            @Param("startDate") LocalDateTime startDate);
+
     List<Order> findByTableIdOrderByCreatedAtDesc(Long tableId);
 
 }

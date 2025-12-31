@@ -7,8 +7,11 @@ import com.example.exaple06.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,5 +85,48 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product không tồn tại"));
         product.setStockQuantity(product.getStockQuantity() + quantity);
         productRepository.save(product);
+    }
+
+    public Map<String, Object> getProductStats() {
+        Map<String, Object> stats = new HashMap<>();
+
+        // Thống kê đơn giản
+        stats.put("totalProducts", productRepository.count());
+        stats.put("averagePrice", productRepository.getAveragePrice());
+        stats.put("totalValue", productRepository.getTotalInventoryValue());
+
+        // Sản phẩm đắt nhất
+        productRepository.findMostExpensiveProduct()
+                .ifPresent(product -> {
+                    stats.put("mostExpensiveProduct", product.getTitle());
+                    stats.put("mostExpensivePrice", product.getPrice());
+                });
+
+        // Sản phẩm nhiều nhất
+        productRepository.findMostStockedProduct()
+                .ifPresent(product -> {
+                    stats.put("mostStockedProduct", product.getTitle());
+                    stats.put("mostStockedQuantity", product.getStockQuantity());
+                });
+
+        // Thống kê theo trạng thái
+        long activeCount = productRepository.findByIsActiveTrue().size();
+        stats.put("activeProducts", activeCount);
+        stats.put("inactiveProducts", productRepository.count() - activeCount);
+
+        return stats;
+    }
+     public List<Product> filterProducts(Double minPrice, Double maxPrice,
+                                        Integer minQuantity, Integer maxQuantity) {
+        // Lấy tất cả sản phẩm active
+        List<Product> allActiveProducts = productRepository.findByIsActiveTrue();
+        
+        // Lọc trong memory (đơn giản, không ảnh hưởng code cũ)
+        return allActiveProducts.stream()
+            .filter(p -> minPrice == null || p.getPrice() >= minPrice)
+            .filter(p -> maxPrice == null || p.getPrice() <= maxPrice)
+            .filter(p -> minQuantity == null || p.getStockQuantity() >= minQuantity)
+            .filter(p -> maxQuantity == null || p.getStockQuantity() <= maxQuantity)
+            .collect(Collectors.toList());
     }
 }
